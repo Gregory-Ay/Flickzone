@@ -1,124 +1,34 @@
 /**
- * TMDB API Service Layer
- * Centralized functions for fetching TMDB data
+ * TMDB API Service Layer - Extended
+ * Additional functions for movie details
  */
 
-type TrendingMovie = {
-  id: number;
-  title: string;
-  overview: string;
-  poster_path: string;
-  backdrop_path: string;
-  release_date: string;
-  vote_average: number;
-  media_type: string;
-};
-
-type SearchMovie = {
+type SimilarMovie = {
   id: number;
   title: string;
   poster_path: string;
-  release_date: string;
   vote_average: number;
 };
 
-type MovieDetails = {
-  id: number;
-  title: string;
-  overview: string;
-  poster_path: string;
-  backdrop_path: string;
-  release_date: string;
-  runtime: number;
-  vote_average: number;
-  genres: Array<{ id: number; name: string }>;
-};
-
-const BASE_URL =
-  process.env.NEXT_PUBLIC_TMDB_BASE_URL || "http://localhost:3000";
-
 /**
- * Fetch trending movies from TMDB
+ * Fetch similar movies
  */
-export async function fetchTrendingMovies(
-  timeWindow: "day" | "week" = "week"
-): Promise<TrendingMovie[]> {
-  try {
-    const res = await fetch(
-      `${BASE_URL}/api/tmdb/trending?timeWindow=${timeWindow}`
-    );
-
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(
-        error.details || error.error || "Failed to fetch trending movies"
-      );
-    }
-
-    const data = await res.json();
-    return data.results || [];
-  } catch (error) {
-    console.error("Error fetching trending movies:", error);
-    throw error;
-  }
-}
-
-/**
- * Search movies by query string
- */
-export async function searchMovies(query: string): Promise<SearchMovie[]> {
-  if (!query.trim()) {
-    throw new Error("Search query cannot be empty");
-  }
-
-  try {
-    const res = await fetch(
-      `${BASE_URL}/api/tmdb/search?q=${encodeURIComponent(query)}`
-    );
-
-    if (!res.ok) {
-      throw new Error("Failed to search movies");
-    }
-
-    const data = await res.json();
-    return data.results || [];
-  } catch (error) {
-    console.error("Error searching movies:", error);
-    throw error;
-  }
-}
-
-/**
- * Fetch detailed information about a specific movie
- */
-export async function fetchMovieDetails(
+export async function fetchSimilarMovies(
   movieId: number
-): Promise<MovieDetails> {
+): Promise<SimilarMovie[]> {
   try {
-    const res = await fetch(`${BASE_URL}/api/tmdb/movie/${movieId}`);
+    const baseUrl =
+      process.env.NEXT_PUBLIC_TMDB_BASE_URL || "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/tmdb/movie/${movieId}/similar`);
 
     if (!res.ok) {
-      throw new Error("Failed to fetch movie details");
+      throw new Error("Failed to fetch similar movies");
     }
 
-    return await res.json();
+    const data = await res.json();
+    return data.results || [];
   } catch (error) {
-    console.error("Error fetching movie details:", error);
-    throw error;
+    console.error("Error fetching similar movies:", error);
+    return [];
   }
-}
-
-/**
- * Format TMDB poster URL
- * @param path - TMDB poster_path
- * @param size - w200, w500, w780, original (default: w500)
- */
-export function getTmdbImageUrl(
-  path: string | null,
-  size: "w200" | "w500" | "w780" | "original" = "w500"
-): string {
-  if (!path) {
-    return "/placeholder-poster.png"; // Fallback
-  }
-  return `https://image.tmdb.org/t/p/${size}${path}`;
 }
